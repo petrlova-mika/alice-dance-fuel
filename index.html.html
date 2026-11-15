@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alice Dance Fuel</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    max-width:900px;
+    margin:auto;
+    padding:15px;
+    background:#f5f7fa;
+}
+.card{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+h1,h2{
+    margin-top:0;
+}
+button{
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin:4px;
+}
+.primary{background:#2563eb;color:white;}
+.success{background:#16a34a;color:white;}
+.danger{background:#dc2626;color:white;}
+.warning{background:#d97706;color:white;}
+.counter{
+    font-size:18px;
+    font-weight:bold;
+}
+#recommendation{
+    font-size:18px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏆 Alice Dance Fuel v1.0</h1>
+
+<div class="card">
+
+<button onclick="newCompetition()" class="primary">
+🆕 Nová soutěž
+</button>
+
+<button onclick="newDay()" class="danger">
+🌙 Nový den
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>🏆 Aktuální soutěž</h2>
+
+<select id="category">
+<option>LAT Junior 1</option>
+<option>LAT Junior 2</option>
+<option>STD Junior 1</option>
+<option>STD Junior 2</option>
+</select>
+
+<br><br>
+
+<label>Další kolo:</label>
+<input id="nextRound" type="time" onchange="recommend()">
+
+</div>
+
+<div class="card">
+
+<h2>🥤 Pití</h2>
+
+<p class="counter">
+Voda: <span id="water">0</span> ml
+</p>
+
+<p class="counter">
+Iontový nápoj: <span id="iso">0</span> ml
+</p>
+
+<p class="counter">
+Celkem: <span id="fluid">0</span> ml
+</p>
+
+<button onclick="addWater(100)">💧 +100</button>
+<button onclick="addWater(200)">💧 +200</button>
+<button onclick="addIso(100)">🥤 +100</button>
+<button onclick="addIso(200)">🥤 +200</button>
+
+</div>
+
+<div class="card">
+
+<h2>🍎 Jídlo</h2>
+
+<p>Kapsička: <span id="puree">0</span></p>
+<p>Toast: <span id="toast">0</span></p>
+<p>Banán: <span id="banana">0</span></p>
+<p>Brumík: <span id="brumik">0</span></p>
+<p>Přesnídávka: <span id="presnidavka">0</span></p>
+
+<button onclick="food('puree')">🍎 Kapsička</button>
+<button onclick="food('toast')">🍞 Toast</button>
+<button onclick="food('banana')">🍌 Banán</button>
+<button onclick="food('brumik')">🧸 Brumík</button>
+<button onclick="food('presnidavka')">🥣 Přesnídávka</button>
+
+</div>
+
+<div class="card">
+
+<h2>⚡ Gely</h2>
+
+<p>½ gelu: <span id="halfGel">0</span></p>
+<p>Celý gel: <span id="fullGel">0</span></p>
+
+<button onclick="food('halfGel')">
+⚡ ½ gelu
+</button>
+
+<button onclick="food('fullGel')">
+⚡ celý gel
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>😵 Stav Alice</h2>
+
+<label><input type="checkbox" id="breath"> Více zadýchaná</label><br>
+<label><input type="checkbox" id="legs"> Bolí nohy</label><br>
+<label><input type="checkbox" id="rhythm"> Ztrácí rytmus</label><br>
+<label><input type="checkbox" id="side"> Píchá v boku</label><br>
+<label><input type="checkbox" id="nausea"> Nevolnost</label><br>
+
+</div>
+
+<div class="card">
+
+<h2>🏃 Soutěž</h2>
+
+<button class="primary" onclick="state='waiting';recommend();">
+🏃 Právě dotančila
+</button>
+
+<button class="success" onclick="state='advanced';recommend();">
+✅ Postoupila
+</button>
+
+<button class="danger" onclick="state='out';recommend();">
+❌ Nepostoupila
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>🤖 Doporučení</h2>
+
+<div id="recommendation">
+Připraveno.
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>📊 Souhrn dne</h2>
+
+<div id="summary"></div>
+
+</div>
+
+<script>
+
+let state='';
+
+let totals={
+water:0,
+iso:0,
+puree:0,
+toast:0,
+banana:0,
+brumik:0,
+presnidavka:0,
+halfGel:0,
+fullGel:0,
+competitions:0
+};
+
+function refresh(){
+
+document.getElementById('water').textContent=totals.water;
+document.getElementById('iso').textContent=totals.iso;
+
+document.getElementById('fluid').textContent=
+totals.water+totals.iso;
+
+for(let key of [
+'puree','toast','banana',
+'brumik','presnidavka',
+'halfGel','fullGel'
+]){
+document.getElementById(key).textContent=totals[key];
+}
+
+document.getElementById('summary').innerHTML=`
+Soutěže dnes: ${totals.competitions}<br>
+Tekutiny: ${totals.water+totals.iso} ml<br>
+Kapsičky: ${totals.puree}<br>
+Toasty: ${totals.toast}<br>
+Banány: ${totals.banana}<br>
+Brumíci: ${totals.brumik}<br>
+Přesnídávky: ${totals.presnidavka}<br>
+1/2 gelu: ${totals.halfGel}<br>
+Celé gely: ${totals.fullGel}
+`;
+}
+
+function addWater(v){
+totals.water+=v;
+refresh();
+recommend();
+}
+
+function addIso(v){
+totals.iso+=v;
+refresh();
+recommend();
+}
+
+function food(type){
+totals[type]++;
+refresh();
+recommend();
+}
+
+function newCompetition(){
+totals.competitions++;
+refresh();
+alert("Založena nová soutěž");
+}
+
+function newDay(){
+
+if(!confirm("Opravdu začít nový den?"))
+return;
+
+totals={
+water:0,
+iso:0,
+puree:0,
+toast:0,
+banana:0,
+brumik:0,
+presnidavka:0,
+halfGel:0,
+fullGel:0,
+competitions:0
+};
+
+state='';
+refresh();
+
+document.getElementById('recommendation').innerHTML=
+'Nový den zahájen.';
+}
+
+function recommend(){
+
+let msg='';
+
+let fluids=totals.water+totals.iso;
+
+if(state==='waiting'){
+msg='✅ Teď 100–150 ml ionťáku. Čekat na výsledky.';
+}
+
+if(state==='out'){
+msg='✅ Nepostoupila. Regenerace, pití a lehká svačina.';
+}
+
+if(state==='advanced'){
+
+let time=
+document.getElementById('nextRound').value;
+
+if(!time){
+msg='⏰ Zadej čas dalšího kola.';
+}
+else{
+
+let now=new Date();
+
+let parts=time.split(':');
+
+let next=new Date();
+
+next.setHours(parts[0]);
+next.setMinutes(parts[1]);
+
+let diff=
+Math.round((next-now)/60000);
+
+if(diff<=30){
+
+msg='✅ Jen voda. Už nic velkého nejíst.';
+
+}
+else if(diff<=90){
+
+msg='✅ Kapsička + ionťák.';
+
+}
+else{
+
+msg='✅ Toast, bageta nebo větší svačina.';
+
+}
+
+}
+
+}
+
+if(fluids<500){
+msg += '<br>🟡 Málo tekutin.';
+}
+
+if(
+totals.halfGel+
+totals.fullGel
+>=2
+){
+msg +=
+'<br>🔴 Už byly použity 2 gelové dávky.';
+}
+
+if(document.getElementById('side').checked){
+msg +=
+'<br>📍 Pozor na píchání v boku.';
+}
+
+if(document.getElementById('nausea').checked){
+msg +=
+'<br>🤢 Preferovat malé dávky jídla.';
+}
+
+document.getElementById('recommendation').innerHTML=msg;
+}
+
+refresh();
+
+</script>
+
+</body>
+</html>
